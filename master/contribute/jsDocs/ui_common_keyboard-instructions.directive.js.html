@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: global-registry.js</title>
+    <title>JSDoc: Source: ui/common/keyboard-instructions.directive.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: global-registry.js</h1>
+    <h1 class="page-title">Source: ui/common/keyboard-instructions.directive.js</h1>
 
     
 
@@ -26,96 +26,73 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>'use strict';
+            <pre class="prettyprint source linenums"><code>const templateUrl = require('./keyboard-instructions.html');
+const dialogUrl = require('./keyboard-instructions-dialog.html');
+
+/* global RAMP */
 
 /**
- * These are global values defined in the RV registry. They can be overridden by creating a global `RV` object with the same properties __before__ `injector.js` is executed.
+ *
+ * @name rvKeyboardInstructions
+ * @module app.ui
+ * @requires dependencies
+ * @description
+ *
  */
-const rvDefaults = {
-    // NOTE is appears this URL def is no longer being used. The `dojoUrl` var in config.service.js is what gets loaded
-    dojoURL: (location.protocol === 'https:' ? 'https:' : 'http:') + '//js.arcgis.com/3.35/init.js',
-};
+angular.module('app.ui').directive('rvKeyboardInstructions', rvKeyboardInstructions);
 
-/**
- * @global
- * @name RV
- * @desc The global object for the viewer.  Used for providing an API to the surrounding page.
- */
-// check if the global RV registry object already exists
-if (typeof window.RV === 'undefined') {
-    window.RV = {};
-}
+function rvKeyboardInstructions($rootElement, $mdDialog, referenceService) {
+    const directive = {
+        restrict: 'E',
+        link,
+        templateUrl,
+        scope: {
+            type: '=',
+        },
+        controller: () => {},
+        controllerAs: 'self',
+        bindToController: true,
+    };
 
-const RV = window.RV; // just a reference
+    return directive;
 
-// apply default values to the global RV registry
-Object.keys(rvDefaults).forEach((key) => applyDefault(key, rvDefaults[key]));
+    /***/
 
-/**
- * Checks if a property is already set and applies the default.
- * @param  {String} name  property name
- * @param  {String|Object|Number} value default value
- */
-function applyDefault(name, value) {
-    if (typeof RV[name] === 'undefined') {
-        RV[name] = value;
+    /**
+     * Open the keyboard instruction dialog.
+     * @function open
+     */
+    function link(scope) {
+        const self = scope.self;
+        const shellNode = referenceService.panels.shell;
+
+        self.open = () => {
+            $mdDialog.show({
+                controller: KeyboardInstructionsController,
+                controllerAs: 'ctrl',
+                bindToController: true,
+                clickOutsideToClose: true,
+                fullscreen: true,
+                templateUrl: dialogUrl,
+                parent: shellNode,
+                disableParentScroll: false,
+            });
+        };
+
+        /**
+         * Controller to set close for $mdDialog
+         *
+         * @function KeyboardInstructionsController
+         * @private
+         */
+        function KeyboardInstructionsController() {
+            'ngInject';
+            const self = this;
+
+            self.close = $mdDialog.hide;
+        }
     }
 }
-
-class BasePlugin {
-    get id() {
-        return this._id;
-    }
-    set id(id) {
-        this._id = id;
-    }
-
-    get api() {
-        return this._api;
-    }
-
-    set translations(t) {
-        this._translations = t;
-    }
-    get translations() {
-        return this._translations;
-    }
-
-    setTranslatableProp(name, value) {
-        this[name] = 'plugin.' + this.id + '.' + value;
-    }
-
-    constructor(pluginID, api) {
-        this.id = pluginID;
-        this._api = api;
-    }
-}
-
-class MenuItem extends BasePlugin {
-    get type() {
-        return 'link';
-    }
-
-    get action() {
-        return this._action;
-    }
-    set action(a) {
-        this._action = a;
-    }
-
-    set name(n) {
-        this.setTranslatableProp('_name', n);
-    }
-    get name() {
-        return this._name;
-    }
-}
-
-RV.BasePlugins = {
-    MenuItem,
-};
-
-RV.Plugins = {};
 </code></pre>
         </article>
     </section>
